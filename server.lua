@@ -6,10 +6,18 @@ RegisterNetEvent('atmheist:server:awarditems', function()
     -- ply.Functions.RemoveItem(Config.HackItem, 1)
     QBCore.Functions.Notify(src, 'Its open!', 'success') 
     if not Config.PhysicalItem and not Config.MoneyReward then print("No rewards given because both Config.PhysicalItem and Config.Money are false.")  end
-    if Config.PhysicalItem then
-        ply.Functions.AddItem(Config.RewardItem, Config.RewardItemAmount)
-        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.RewardItem], "add")
+    if Config.PhysicalItem then -- Added to use config instead
+        local amount = math.random(Config.MinAmount, Config.MaxAmount) -- random amount of bags.
+        local info = {
+            worth = math.random(Config.MinWorth, Config.MaxWorth) -- Each bag will be worth a random amount between your config worth.
+        }
+        ply.Functions.AddItem('markedbills', amount, false, info)
+        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items['markedbills'], "add", amount)
     end
+    -- if Config.PhysicalItem then
+    --     ply.Functions.AddItem(Config.RewardItem, Config.RewardItemAmount)
+    --     TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.RewardItem], "add")
+    -- end
     if Config.MoneyReward then
         ply.Functions.AddMoney("cash", math.ceil(Config.RewardCashAmount))
         TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.RewardItem], "add")
