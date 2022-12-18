@@ -10,6 +10,11 @@ local function StartCooldown(src)
     end
 end
 
+RegisterNetEvent('atmheist:server:StartCooldown', function()
+    local src = source
+    StartCooldown(src)
+end)
+
 QBCore.Functions.CreateCallback('atmheist:server:notOnCooldown', function(source, cb)
     local src = source
     if ActiveCooldowns[src] == 'active' then
