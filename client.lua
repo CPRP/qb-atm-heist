@@ -149,7 +149,7 @@ RegisterNetEvent('atmheist:hackatm', function()
 		 end, 4, 6) -- Number of Blocks, Time (seconds)
 	    end, function() end)
 	else
-		QBCore.Functions.Notify("You don't have a USB?", 'error)
+		QBCore.Functions.Notify("You don't have a USB?", 'error')
 	end
 end)
 
