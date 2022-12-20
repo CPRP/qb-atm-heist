@@ -1,7 +1,34 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
+ActiveCooldowns = {}
+
+local function StartCooldown(src)
+    if src then
+        ActiveCooldowns[src] = 'active'   
+        Citizen.Wait(Config.CooldownWait)
+        ActiveCooldowns[src] = false
+    end
+end
+
+RegisterNetEvent('atmheist:server:StartCooldown', function()
+    local src = source
+    StartCooldown(src)
+end)
+
+QBCore.Functions.CreateCallback('atmheist:server:notOnCooldown', function(source, cb)
+    local src = source
+    if ActiveCooldowns[src] == 'active' then
+        cb(false)
+    else
+        cb(true)
+    end
+end)
+
 RegisterNetEvent('atmheist:server:awarditems', function()
     local src = source
+    
+    if ActiveCooldowns[src] then QBCore.Functions.Notify(src, 'Systems are shut down due to a recent security breach.', 'error') return end
+     
     local ply = QBCore.Functions.GetPlayer(src)
     -- ply.Functions.RemoveItem(Config.HackItem, 1)
     QBCore.Functions.Notify(src, 'Its open!', 'success') 
@@ -22,7 +49,8 @@ RegisterNetEvent('atmheist:server:awarditems', function()
         ply.Functions.AddMoney("cash", math.ceil(Config.RewardCashAmount))
         TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[Config.RewardItem], "add")
     end
-
+        
+    StartCooldown(src)
 end)
 
 RegisterNetEvent('atmheist:server:failure', function()

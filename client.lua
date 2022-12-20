@@ -45,9 +45,7 @@ end)
 
 local function Cooldown(type)
     if type == 'fail' and not Config.FailCooldown then return end
-    onCooldown = true
-    Wait(Config.CooldownWait)
-    onCooldown = false
+ 	TriggerServerEvent('atmheist:startCooldown')
 end
 
 local function CallPolice(coords)
@@ -123,34 +121,52 @@ local function FinishAnimation()
 end
 
 RegisterNetEvent('atmheist:hackatm', function()
-    if onCooldown then QBCore.Functions.Notify('Systems are shut down due to a recent security breach.', 'error') return end
-    local ped = PlayerPedId()
-    HackAnimation()
-    QBCore.Functions.Progressbar('atm_hack', 'Waiting for connection...', 3500, false, false, { -- Name | Label | Time | useWhileDead | canCancel
-        disableMovement = true,
-        disableCarMovement = true,
-        disableMouse = false,
-        disableCombat = true,
-    }, {}, {}, {}, function() -- Play When Done
-        exports['ps-ui']:VarHack(function(success)
-            if success then
-                FinishAnimation()
-                CallPolice(GetEntityCoords(ped))
-                TriggerServerEvent('atmheist:server:awarditems')
-                Cooldown("success")
-            else
-                FinishAnimation()
-                CallPolice(GetEntityCoords(ped))
-                TriggerServerEvent('atmheist:server:failure')
-                Cooldown("fail")
-            end
-         end, 4, 6) -- Number of Blocks, Time (seconds)
-    end, function() end)
+    QBCore.Functions.TriggerCallback('atmheist:server:notOnCooldown', function(result)
+        if result then
+             local ped = PlayerPedId()
+	    local hasitem = QBCore.Functions.HasItem(Config.HackItem, 1)
+	    if hasitem then
+		    HackAnimation()
+		    QBCore.Functions.Progressbar('atm_hack', 'Waiting for connection...', 3500, false, false, { -- Name | Label | Time | useWhileDead | canCancel
+			disableMovement = true,
+			disableCarMovement = true,
+			disableMouse = false,
+			disableCombat = true,
+		    }, {}, {}, {}, function() -- Play When Done
+			exports['ps-ui']:VarHack(function(success)
+			    if success then
+				local hasitem = QBCore.Functions.HasItem(Config.HackItem, 1)
+				FinishAnimation()
+				CallPolice(GetEntityCoords(ped))
+				if hasitem then
+					TriggerServerEvent('atmheist:server:awarditems')
+					Cooldown("success")
+				else
+					QBCore.Functions.Notify("You must've broken the USB or something.", "error")
+					TriggerServerEvent('atmheist:server:failure')
+					Cooldown("fail")
+				end
+			    else
+				FinishAnimation()
+				CallPolice(GetEntityCoords(ped))
+				TriggerServerEvent('atmheist:server:failure')
+				Cooldown("fail")
+			    end
+			 end, 4, 6) -- Number of Blocks, Time (seconds)
+		    end, function() end)
+		else
+			QBCore.Functions.Notify("You don't have a USB?", 'error')
+		end
+	else
+	    QBCore.Functions.Notify('Systems are shut down due to a recent security breach.', 'error')
+	end
+    end)
 end)
 
 RegisterNetEvent('atmheist:cl:callcops', function(coords)
 	local PlayerJob = QBCore.Functions.GetPlayerData().job
 	if PlayerJob.name ~= "police" or not PlayerJob.onduty then return end
+
 	local transG = 250
 	local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
 	SetBlipSprite(blip, 648)
